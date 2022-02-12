@@ -41,22 +41,21 @@ def main():
             e2 = ebatch(Ps, int(t[1]))
             G1 = ppin.PPINet(e1, name=t[0])
             G2 = ppin.PPINet(e2, name=t[1])
-            alligner = ppin.ILPAlligner()
+            alligner = ppin.ILPAlligner(time_limit=3600)
             alligner.fit(G1, G2, Ds, coeff)
             while coeff  <= 1:
                 alligner.update_obj(coeff)
-                for s in SOLVERS:
-                    alligner.solve(solver=s, time_limit=3600, verbose=False)
-                    out = "\t".join([alligner.getUID(),
-                                min(G1,G2).name, 
-                                max(G1,G2).name, 
-                                str(coeff),
-                                str(round(alligner.node_similarity(), 4)), 
-                                str(round(alligner.edge_correctness(),4)),
-                                s,
-                                str(alligner.get_wtime())
-                               ]) + "\n"
-                    fout.write(out)
+                alligner.solve(solver="cplex", verbose=False)
+                out = "\t".join([alligner.getUID(),
+                            min(G1,G2).name, 
+                            max(G1,G2).name, 
+                            str(coeff),
+                            str(round(alligner.node_similarity(), 4)), 
+                            str(round(alligner.edge_correctness(),4)),
+                            #s,
+                            str(alligner.get_wtime())
+                            ]) + "\n"
+                fout.write(out)
                 coeff += 0.25
 
     pass
