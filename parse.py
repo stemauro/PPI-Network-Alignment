@@ -25,15 +25,17 @@ def main() :
     THRESHOLD           = 510
     HOMO_SAPIENS_TAXID  = 9606
     SOL                 = ">"
-    PASS_IDS            = [11269,186538,194443,194441,11137,194440,
-                           694009,337041,11320,11103,162145,11250,
-                           32604,32603,11161,63330,11234,11676,11709,
-                           37296,10359,10376,10335,10310,10298]
+    #PASS_IDS            = [11269,186538,194443,194441,11137,194440,
+    #                       694009,337041,11320,11103,162145,11250,
+    #                       32604,32603,11161,63330,11234,11676,11709,
+    #                       37296,10359,10376,10335,10310,10298]
     #PASS_IDS            = [10390, 10623]
+    PASS_IDS            = [11552, 334203, 11070, 11082,
+                           10255, 10407, 138950, 11520]
 
     # I/O filepaths
     infile  = "9606.protein.links.v10.5.txt"
-    outfile = "9606-virus-host-interactions.txt"
+    outfile = "exam-virus-host-interactions.txt"
     inpath  = os.path.join(os.getcwd(), INDIR, infile)
     outpath = os.path.join(os.getcwd(), OUTDIR, outfile)
 
@@ -67,9 +69,9 @@ def main() :
     
     # I/O filepaths
     infile  = "protein.sequences.v10.5.fa"
-    outfile = "protein-sequences.fa"
+    outfile = "exam-protein-sequences.fa"
     inpath  = os.path.join(os.getcwd(), INDIR, infile)
-    outpath = os.path.join(os.getcwd(), OUTDIR, infile)
+    outpath = os.path.join(os.getcwd(), OUTDIR, outfile)
     
     # Parse aminoacid sequences
     fin  = open(inpath, "r", encoding="utf8")

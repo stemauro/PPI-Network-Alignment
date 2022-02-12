@@ -189,21 +189,25 @@ class ILPAlligner(object):
     topological coherence scores by the number of nodes and edges
     of the smallest network, respectively.
     """
-    def __init__(self, alpha, time_limit=60, prob_file=False):
-        
-        # Safe check on parameters
-        if alpha < 0 or alpha > 1:
-            raise ValueError("The alpha coefficient must be between 0 and 1.")
+    def __init__(self, time_limit=60, prob_file=False):
         self._uid       = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
         self._timeout   = time_limit
         self._solvers   = ["cplex", "glpk", "gurobi"]
         self._prob_file = prob_file 
-        self.alpha      = alpha
 
     def getUID(self):
         return self._uid
 
-    def fit(self, G1, G2, Ds):
+    def _obj_rule(self, m, alpha):
+        fc = sum(self.S[(i,k)] * m.x[i,k] for k in m.K for i in m.I)
+        ec = sum(m.y[i,k] for k in m.K for i in m.I)
+        return alpha * fc + (1 - alpha) * ec
+
+
+    def fit(self, G1, G2, Ds, alpha):
+
+        if alpha < 0 or alpha > 1:
+            raise ValueError("The objective coefficient must be between 0 and 1.")
 
         # Ensure smaller networks are mapped into
         # larger networks for consistency
@@ -230,13 +234,6 @@ class ILPAlligner(object):
         model.x = pyo.Var(model.I, model.K, domain=pyo.Binary)
         model.y = pyo.Var(model.I, model.K, domain=pyo.NonNegativeIntegers)
 
-        def obj_rule(model):
-            fc = sum(self.S[(i,k)] * model.x[i,k] for k in model.K for i in model.I)
-            ec = sum(model.y[i,k] for k in model.K for i in model.I)
-            return self.alpha * fc + (1 - self.alpha) * ec
-
-        model.obj = pyo.Objective(rule=obj_rule, sense=pyo.maximize)
-        
         # X is a (partial) mapping
         def cst_mapping(model, i):
             return sum(model.x[i,k] for k in model.K) <= 1
@@ -263,8 +260,18 @@ class ILPAlligner(object):
         if self._prob_file:
             outpath = os.path.abspath(''.join(["ilp",self._uid,".lp"]))
             model.write(outpath)
+       
+        # Objective function
+        model.obj = pyo.Objective(rule=lambda x: self._obj_rule(x, alpha), sense=pyo.maximize)
         
         self.model = model
+
+        pass
+    
+    
+    def update_obj(self, alpha):
+        self.model.del_component(self.model.obj)
+        self.model.obj = pyo.Objective(rule=lambda x: self._obj_rule(x,alpha), sense=pyo.maximize)
 
 
     def solve(self, solver="glpk", verbose=True):
