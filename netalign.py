@@ -34,7 +34,6 @@ def main():
     TAXID   = ["11552", "334203", "11070", "11082", "10255", "10407", "138950", "11520"]
     SOLVERS = ["cplex", "glpk"]
 
-    #t = TAXID[0]
     with open("perf.txt", "w") as fout:
         for t in combinations(TAXID,2):
             coeff = 0
@@ -47,7 +46,7 @@ def main():
             while coeff  <= 1:
                 alligner.update_obj(coeff)
                 for s in SOLVERS:
-                    alligner.solve(solver=s, verbose=False)
+                    alligner.solve(solver=s, time_limit=3600, verbose=False)
                     out = "\t".join([alligner.getUID(),
                                 min(G1,G2).name, 
                                 max(G1,G2).name, 
