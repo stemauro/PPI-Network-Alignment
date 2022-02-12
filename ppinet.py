@@ -270,9 +270,12 @@ class ILPAlligner(object):
     
     
     def update_obj(self, alpha):
-        self.model.del_component(self.model.obj)
-        self.model.obj = pyo.Objective(rule=lambda x: self._obj_rule(x,alpha), sense=pyo.maximize)
-
+        if hasattr(self, "model"):
+            self.model.del_component(self.model.obj)
+            self.model.obj = pyo.Objective(rule=lambda x: self._obj_rule(x,alpha), sense=pyo.maximize)
+        else:
+            raise AttributeError(" ".join(["Couldn't find any instance to update.",
+                "Make sure to call fit() on a model before editing."]))
 
     def solve(self, solver="glpk", verbose=True):
         s = solver.lower()
