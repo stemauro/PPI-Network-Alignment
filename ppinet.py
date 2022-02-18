@@ -40,7 +40,8 @@ class IQPAlligner(object):
     
     The optimization objective for IQPAlligner is:
 
-    
+        alpha * (sum(s_ik * x_ik)) +  
+                (1 - alpha) * sum(a_ij * b_kl * x_ik * x_jl) 
 
     obtaines as a convex combination of two scores measuring
     biological coherence and topological coherence, respectively.
@@ -181,8 +182,10 @@ class ILPAlligner(object):
     PPI network allignment solved as an integrer linear programming (ILP) problem.
     
     The optimization objective for ILPAlligner is:
+
+        alpha * (sum(s_ik * x_ik)) + (1-alpha) * (sum(y_ik))
     
-    obtaines as a convex combination of two scores measuring
+    obtained as a convex combination of two scores measuring
     biological coherence and topological coherence, respectively.
     Values of functional coherence (FC) and edge correctness (EC)
     are obtained by normalizing biological coherence and
@@ -244,17 +247,17 @@ class ILPAlligner(object):
             return sum(model.x[i,k] for i in model.I) <= 1
         model.injective = pyo.Constraint(model.K, rule=cst_injective)
 
-        # Relationship between x and y
-        def cst_bin2int(model, i, k):
+        # Indegree source networks
+        def cst_indeg_src(model, i, k):
             c = sum(self.A[i,j] * self.B[k,l] for l in model.K for j in model.I)
             return model.y[i,k] <= c * model.x[i,k]
-        model.bin2int = pyo.Constraint(model.I, model.K, rule=cst_bin2int)
+        model.indeg_src = pyo.Constraint(model.I, model.K, rule=cst_indeg_src)
 
-        # Number of preserved edges
-        def cst_preserved(model, i, k):
+        # Indegree target network
+        def cst_indeg_dst(model, i, k):
             ub = sum(self.A[i,j] * self.B[k,l] * model.x[j,l] for l in model.K for j in model.I)
             return model.y[i,k] <= ub
-        model.preserved = pyo.Constraint(model.I, model.K, rule=cst_preserved)
+        model.indeg_dst = pyo.Constraint(model.I, model.K, rule=cst_indeg_dst)
         
         # Write model to file
         if self._prob_file:
@@ -317,8 +320,10 @@ class ILPAlligner(object):
         return bc / self._n1
     
     def edge_correctness(self):
-        tc = sum(self.model.y[i,k]() for k in self.model.K for i in self.model.I)
-        
+        tc = sum(self.A[i,j] * self.B[k,l] * self.model.x[i,k]() * self.model.x[j,l]()
+                        for l in self.model.K for j in self.model.I
+                        for k in self.model.K for i in self.model.I)
+
         return tc / self.A.sum()
 
     def get_wtime(self):
